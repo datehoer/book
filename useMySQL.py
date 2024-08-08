@@ -155,15 +155,6 @@ class MySQLDatabase(metaclass=SingletonMeta):
             except DatabaseOperationFailed as e:
                 logger.error(f"Batch insert failed: {e}")
 
-    def batch_update(self, table_name, columns, data_list, where_column, batch_size=100):
-        set_columns = ', '.join([f"{col} = %s" for col in columns])
-        sql_base = f"UPDATE {table_name} SET {set_columns} WHERE {where_column} = %s"
-        total_count = len(data_list)
-        for i in range(0, total_count, batch_size):
-            batch_data = data_list[i:i + batch_size]
-            for record in batch_data:
-                self.execute(sql_base, params=record)
-
     def close_all_connections(self):
         while not self.pool.empty():
             conn = self.pool.get()

@@ -1,16 +1,15 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Query
 from pydantic import BaseModel, EmailStr
-from sqlalchemy.sql import select
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
-
-from MyDatabase import database, engine
-from models import users
+from config import MYSQL_CONFIG
+from useMySQL import MySQLDatabase
 
 app = FastAPI()
+db = MySQLDatabase(MYSQL_CONFIG)
 
 SECRET_KEY = "QWERASDFZXCV789TYUI4561234"
 ALGORITHM = "HS256"
@@ -104,3 +103,16 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @app.get("/users/me", response_model=UserOut)
 async def read_users_me(current_user: UserOut = Depends(get_current_user)):
     return current_user
+
+
+
+@app.get("/books")
+async def get_books(page: int = Query(1, ge=1), page_size: int = Query(10, ge=1)):
+    offset = (page - 1) * page_size
+    query = book_book.select().offset(offset).limit(page_size)
+    books = await database.fetch_all(query)
+    return books
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)
